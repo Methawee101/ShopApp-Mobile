@@ -43,7 +43,7 @@ const Itemscreen = () => {
 
   const handleDarkMode = () => {
     setDarkMode(!darkMode);
-    setBackgroundColor(darkMode ? "#FEF9E1" : "gray");
+    setBackgroundColor(darkMode ? "#FEF9E1" : "#3D3D3D");
     }
   
 
