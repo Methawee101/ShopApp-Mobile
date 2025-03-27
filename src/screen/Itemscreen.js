@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useReducer } from "react";
-import {View,Text,StyleSheet,TextInput,FlatList,TouchableOpacity,Modal,} from "react-native";
+import {View,Text,StyleSheet,TextInput,FlatList,TouchableOpacity,Modal,Switch} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AddButton from "../component/AddButton";
 import ItemCard from "../component/ItemCard";
@@ -10,16 +10,16 @@ const STORAGE_KEY = "@card_data";
 const reducer = (state, action) => {
   switch (action.type) {
     case "addCard":
-      console.log("➕ Add Card: Current Sum:", state.sum, "Adding:", action.price);
+      console.log("Add Card: Current Sum:", state.sum, "Adding:", action.price);
       return { sum: state.sum + action.price };
     case "delete":
-      console.log("❌ Delete Card: Current Sum:", state.sum, "Subtracting:", action.price);
+      console.log("Delete Card: Current Sum:", state.sum, "Subtracting:", action.price);
       return { sum: state.sum - action.price };
     case "deleteAll":
-      console.log("🗑️ Delete All: Reset Sum to 0");
+      console.log("Delete All: Reset Sum to 0");
       return { sum: 0 };
     case "setTotal":  
-    console.log("🔄 Set Total from AsyncStorage:", action.price);
+    console.log("Set Total from AsyncStorage:", action.price);
       return { sum: action.price };
     default:
       return state;
@@ -38,6 +38,14 @@ const Itemscreen = () => {
   const [state, dispatch] = useReducer(reducer,{ sum: 0 });
   const [edit, setEdit] = useState(null);
   const [total, setTotal] = useState(0);
+  const [darkMode, setDarkMode] = useState(false);
+  const [backgroundColor, setBackgroundColor] = useState("#FEF9E1");
+
+  const handleDarkMode = () => {
+    setDarkMode(!darkMode);
+    setBackgroundColor(darkMode ? "#FEF9E1" : "gray");
+    }
+  
 
   const handleSearch = (text) => {
     setSearch(text);
@@ -157,27 +165,27 @@ const Itemscreen = () => {
   };
 
   const togglePurchaseStatus = async (id) => {
-    let updatetotal = state.sum;
+    
     const updatedCards = cards.map((card) => {
       if (card.id === id) {
         
         const updatedCard = { ...card, isPurchased: !card.isPurchased };
         if (!card.isPurchased) {
           dispatch({ type: "delete", price: card.price });
-          updatetotal += card.price;
-          
         }else{
-          dispatch({ type: "addCard", price: card.price });
-          updatetotal -= card.price;
+          dispatch({ type: "setTotal", price: card.price });
+          
         }
         return updatedCard;
       }
       return card;
+      
+     
     });
-    setTotal(updatetotal);
+    
     setCards(updatedCards);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({cards:updatedCards,total:updatetotal}));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({cards:updatedCards,total:price}));
   
     } catch (error) {
       console.log("Error:", error);
@@ -237,9 +245,12 @@ const Itemscreen = () => {
 
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: backgroundColor }]}>
       <View style={styles.Toch}>
         <Text style={styles.header}>รายการสินค้า</Text>
+        <Switch
+          value={darkMode}
+          onValueChange={handleDarkMode}/>
       </View>
 
       <TextInput
