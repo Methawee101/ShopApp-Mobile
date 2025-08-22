@@ -39,13 +39,10 @@ const Itemscreen = () => {
   const [edit, setEdit] = useState(null);
   const [total, setTotal] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState("#FEF9E1");
 
   const handleDarkMode = () => {
-    setDarkMode(!darkMode);
-    setBackgroundColor(darkMode ? "#FEF9E1" : "#3D3D3D");
+    setDarkMode((prevMode)=> !prevMode);
     }
-  
 
   const handleSearch = (text) => {
     setSearch(text);
@@ -253,7 +250,7 @@ const Itemscreen = () => {
 
 
   return (
-    <View style={[styles.container, { backgroundColor: backgroundColor }]}>
+    <View style={[styles.container, { backgroundColor: darkMode ? "#3D3D3D" : "#FEF9E1"}]}>
       <View style={styles.Toch}>
         <Text style={styles.header}>รายการสินค้า</Text>
         <Switch
@@ -401,7 +398,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#FEF9E1",
+
   },
   header: {
     fontSize: 24,
