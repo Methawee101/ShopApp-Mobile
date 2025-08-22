@@ -61,6 +61,7 @@ const Itemscreen = () => {
       return;
     }
     const priceValue = parseFloat(price);
+    dispatch({ type: "addCard", price: priceValue });
     const newCard = {
       id: Date.now().toString(),
       title,
@@ -75,7 +76,6 @@ const Itemscreen = () => {
     setPrice("");
     setImage("");
     setIsVisible(false);
-    dispatch({ type: "addCard", price: priceValue });
     console.log('addcard',state.sum);
     console.log('Total',updatetotal);
 
@@ -122,15 +122,19 @@ const Itemscreen = () => {
   const DeleteItem = async (id) => {
     const itemToDelete = cards.find((item) => item.id === id); 
     const newCards = cards.filter((item) => item.id !== id);
-    const updatetotal = Math.max(0, state.sum - itemToDelete.price);
-    setCards(newCards);
-    setTotal(updatetotal)
-    if (!itemToDelete.isPurchased || state.sum >= itemToDelete.price) {
-      dispatch({ type: "delete", price: itemToDelete.price });
+
+    let updateTotal = state.sum;
+    if (!itemToDelete.isPurchased ) {
+      updateTotal -= itemToDelete.price;
     }
+    dispatch({type: "setTotal", price: updateTotal})
+    setCards(newCards);
+    
+    
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({cards:newCards,total:updatetotal}));
-      
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cards:newCards,
+        total:updateTotal}));
       
     } catch (error) {
       console.log("Error:", error);
@@ -159,6 +163,13 @@ const Itemscreen = () => {
   };
   const openModalEdit = (id) => {
     setIsVisibleEdit(true);
+    setEdit(id);
+    const itemEdit = cards.find(card => card.id === id);
+    if (itemEdit){
+      setTitle(itemEdit.title);
+      setPrice(itemEdit.price);
+      setImage(itemEdit.image);
+    }
   }
   const closeModalEdit = () => {
     setIsVisibleEdit(false);
@@ -168,15 +179,7 @@ const Itemscreen = () => {
     
     const updatedCards = cards.map((card) => {
       if (card.id === id) {
-        
-        const updatedCard = { ...card, isPurchased: !card.isPurchased };
-        if (!card.isPurchased) {
-          dispatch({ type: "delete", price: card.price });
-        }else{
-          dispatch({ type: "setTotal", price: card.price });
-          
-        }
-        return updatedCard;
+        return {...card,isPurchased:!card.isPurchased}
       }
       return card;
       
@@ -184,8 +187,13 @@ const Itemscreen = () => {
     });
     
     setCards(updatedCards);
+    const newTotal = updatedCards.reduce((sum, card)=> sum + (card.isPurchased ? 0 : card.price), 0);
+    dispatch({type:"setTotal", price: newTotal});
+    setTotal(newTotal);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({cards:updatedCards,total:price}));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+        cards:updatedCards,
+        total:newTotal}));
   
     } catch (error) {
       console.log("Error:", error);
@@ -204,10 +212,7 @@ const Itemscreen = () => {
 
    // หาข้อมูลสินค้าเดิม
     const oldCard = cards.find((card) => card.id === id);
-    if (!oldCard) {
-        console.log("Card not found");
-        return;
-    }
+    
 
     const updatedCards = cards.map((card) => {
         if (card.id === id) {
@@ -236,7 +241,10 @@ const Itemscreen = () => {
     setIsVisibleEdit(false);
 
     try {
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCards));
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({
+          cards: updatedCards,
+        total: state.sum + priceDifference
+        }));
     } catch (error) {
         console.log("Error:", error);
     }
@@ -374,9 +382,8 @@ const Itemscreen = () => {
 
         {cards.length > 0 && (
           <AddButton
-            key={cards[0].id}
-            title={`แก้ไขรายการสิรค้า`}
-            onPress={() => EditCard(cards[0].id)}
+            title={`แก้ไขรายการสินค้า`}
+            onPress={() => EditCard(edit)}
             backgroundColor="#6D2323"
           />
         )}
